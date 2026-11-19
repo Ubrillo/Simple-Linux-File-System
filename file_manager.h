@@ -166,7 +166,6 @@ void FileManager::ls(const string& path = ".") const {
 }
 
 bool FileManager::mkdir(const string& path) const {
-
     auto slash = path.find_last_of('/');
     string parentPath = (slash == string::npos) ? "." :
         (slash == 0) ? "/" : path.substr(0, slash);
