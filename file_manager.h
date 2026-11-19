@@ -34,6 +34,8 @@ public:
     string pwd() const;
     bool copy(const string&, const string&, const string&);
     bool move(const string&, const string&, const string&);
+    void ls(const string&) const;
+    bool mkdir(const string&) const;
 };
 
 inline void FileManager::openFolder(const string &name) {
@@ -103,7 +105,7 @@ inline bool FileManager::cd(const string &path) {
 }
 
 inline string FileManager::pwd() const {
-    if (cwd == root.get()) return "*/";
+    if (cwd == root.get()) return "/";
     vector<string>names;
     for (const Folder* f = cwd; f->parent(); f = f->parent()) {
         names.push_back(f->getName());
@@ -115,7 +117,8 @@ inline string FileManager::pwd() const {
         ++it) {
         path += "/" + *it;
     }
-    path = "*" + path;
+    ///path = "*/" + path;
+    path += (names.empty()) ? "/" : "";
     return path;
 }
 
@@ -151,4 +154,26 @@ inline bool FileManager::move(const string& name, const string &from, const stri
     return true;
 }
 
+void FileManager::ls(const string& path = ".") const {
+    Folder* f = resolveDirectory(path);
+    if (!f) {
+        cout << "ls: no such directory\n";
+        return;
+    }
+    for (const auto& pair: f->items) {
+        cout << (pair.second->isFolder() ? "/" : "") << pair.first << "\n";
+    }
+}
+
+bool FileManager::mkdir(const string& path) const {
+    auto slash = path.find_last_of('/');
+    string parentPath = (slash == string::npos) ? "." :
+        (slash == 0) ? "/" : path.substr(0, slash);
+
+    string name = (slash == string::npos) ? path : path.substr(slash+1);
+    if (name.empty() || name == "." || name == "..") return false;
+
+    Folder* parent = resolveDirectory(parentPath);
+    return parent && parent->newFolder(name);
+}
 #endif //FILEMANAGER_FILE_MANAGER_H

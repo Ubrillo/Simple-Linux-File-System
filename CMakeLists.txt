@@ -11,4 +11,5 @@ add_executable(FileManager main.cpp
         folder.h
         file_system.h
         shell.cpp
+        shell.h
 )

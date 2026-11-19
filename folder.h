@@ -70,15 +70,12 @@ inline Folder* Folder::closeFolder() const { return root;}
 
 inline const map<const string, unique_ptr<Node>>& Folder::getItems() const  { return items; }
 
-
 inline Node* Folder::find(const string& name) const {
     auto it = items.find(name); //TO-DO: check what iterator is returned into auto
     return it == items.end() ? nullptr : it->second.get();
 }
 
-
 inline Folder::Folder(const Folder &f):Node(f) {
-    items.clear();
     for (const auto& pair : f.getItems()) {
         Node* node = pair.second.get();
         if (node->isFolder()) {
@@ -98,9 +95,11 @@ inline Folder::Folder(const Folder &f):Node(f) {
 }
 
 Folder& Folder::operator=(const Folder &rhs) {
-    if (this == &rhs) return *this;
-    *this = std::move(rhs);
-    return *this;
+    items.clear();
+    if (&(*this) == &rhs) return *this;
+    unique_ptr<Node>new_ptr(new Folder(rhs));
+    items.insert({rhs.getName(), std::move(new_ptr)});
+    *this;
 }
 
 ////////////////////////
@@ -129,6 +128,5 @@ inline string Node::properties() const {
             "\nroot: " + (root ? root->name : "none") +
             "\npath: " + path();
 }
-
 ///////////////////
 #endif //FILEMANAGER_FOLDER_H
