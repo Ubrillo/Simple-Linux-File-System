@@ -1,16 +1,17 @@
 //
 // Created by ubril on 11/16/2026.
 //
-
 #ifndef FILEMANAGER_SHELL_H
 #define FILEMANAGER_SHELL_H
 #include <functional>
 #include <sstream>
+#include <iostream>
+#include "file_system.h"
 #include "file_manager.h"
 
+using std::cout;
+using std::endl;
 using std::function;
-using std::getline;
-using std::size_t;
 
 using Args = vector<string>;
 struct Command {
@@ -21,7 +22,7 @@ struct Command {
 
 class Shell {
 private:
-    FileManager& fm;
+    FileSystem& fs;
     bool running = true;
     map<string, Command> commands;
 
@@ -30,7 +31,7 @@ private:
     void execute(const string& line);
 
 public:
-    explicit Shell(FileManager& fm): fm(fm) { registerCommands(); }
+    explicit Shell(FileManager& fm): fs(fm) { registerCommands(); }
     Shell(const Shell&) = delete;
     Shell& operator=(const Shell&) = delete;
     void run();
@@ -38,34 +39,61 @@ public:
 
 void Shell::registerCommands() {
     add("pwd", 0, "pwd", [this](const Args&) {
-        cout << fm.pwd() << endl;
+        cout << fs.showCurrentFolder() << endl;
     });
 
     add ("ls", 0, "ls [path]", [this](const Args& arg) {
-        fm.ls(arg.empty() ? "." : arg[0]);
+        cout << fs.list(arg.empty() ? "." : arg[0]) << endl;
     });
 
     add ("cd", 1, "cd <path>", [this](const Args& arg) {
-       if (!fm.cd(arg[0]))
+       if (!fs.openFolder(arg[0]))
            cout << "cd: no such directory: " << arg[0] << endl;
     });
 
     add("mkdir", 1, "mkdir <path>", [this](const Args& arg) {
-        if (!fm.mkdir(arg[0]))
+        if (!fs.newFolder(arg[0]))
             cout << "mkdir: cannot create '" << arg[0] << endl;
     });
     
     add("copy", 3, "<item-name> <from-path> <to-path>", 
         [this](const Args& arg) {
-            if (!fm.copy(arg[0], arg[1], arg[2]))
+            if (!fs.copy(arg[0], arg[1], arg[2]))
                 cout << "copy aborted!" << endl;
-        });
+    });
     
     add ("move", 3, "<item-name> <from path> <to path>",
         [this](const Args& arg) {
-            if (!fm.move(arg[0], arg[1], arg[2]))
-                cout << "move aborted" << endl;
+            if (!fs.move(arg[0], arg[1], arg[2]))
+                cout << "move aborted!" << endl;
+    });
+
+    add ("wtf", 2, "<message> <file-path>",
+        [this](const Args& arg) {
+           if (!fs.writeToFile(arg[0], arg[1]))
+               cout << "write aborted!" << endl;
         });
+
+    add ("info", 1, "<item-path>",
+        [this](const Args& arg) {
+        cout << fs.showInfo(arg[0]) << endl;
+    });
+
+    add ("rm", 1, "rm <path>",
+        [this](const Args& arg) {
+        fs.remove(arg[0]);
+    });
+
+    add ("shwfile", 1, "shwfile <path>",
+        [this](const Args& arg) {
+        cout<< fs.showFileContent(arg[0]) << endl;
+    });
+
+    add ("newfile", 1, "rm <path>",
+        [this](const Args& arg) {
+            if (!fs.newFile(arg[0]))
+                cout << "newfile aborted!" << endl;
+    });
 
     add ("help", 0, "help", [this](const Args&) {
        for (const auto& pair : commands) {
@@ -76,6 +104,5 @@ void Shell::registerCommands() {
     add("exit", 0, "exit", [this](const Args&) {
        running = false;
     });
-    
 }
 #endif //FILEMANAGER_SHELL_H

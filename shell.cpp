@@ -3,10 +3,11 @@
 //
 #include "shell.h"
 
+
 inline void Shell::run() {
     string line;
     while (running) {
-        cout << fm.pwd() << ">" << std::flush;
+        cout << fs.showCurrentFolder() << ">" << std::flush;
         if (!getline(std::cin, line)) break;
         execute(line);
     }

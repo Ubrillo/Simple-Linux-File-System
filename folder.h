@@ -99,7 +99,7 @@ Folder& Folder::operator=(const Folder &rhs) {
     if (&(*this) == &rhs) return *this;
     unique_ptr<Node>new_ptr(new Folder(rhs));
     items.insert({rhs.getName(), std::move(new_ptr)});
-    *this;
+    return *this;
 }
 
 ////////////////////////

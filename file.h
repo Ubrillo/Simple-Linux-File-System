@@ -17,6 +17,7 @@ public:
     using Node::Node;
     void writeToFile(const string &data){ this->data = data; }
     bool isFolder() const override { return false; }
+    string getData()  { return data; }
 };
 
 

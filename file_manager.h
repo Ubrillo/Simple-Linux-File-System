@@ -3,66 +3,109 @@
 //
 #ifndef FILEMANAGER_FILE_MANAGER_H
 #define FILEMANAGER_FILE_MANAGER_H
-#include <iostream>
 #include <sstream>
 #include <vector>
+#include "file_system.h"
 #include "folder.h"
 
-using std::cout;
-using std::endl;
-using std::vector;
-
-class FileManager {
+class FileManager : public FileSystem {
 private:
     unique_ptr<Folder> root;
     Folder* cwd;
     Node* resolve(const string&) const;
     Folder* resolveDirectory(const string&) const;
+    File* resolveFile(const string&) const;
+    bool addFile(File &file);
+    bool addFolder(Folder &folder);
 
 public:
     FileManager() : root(new Folder("")), cwd(root.get()){}
-    void openFolder(const string&);
+    bool openFolder(const string&)  override;
     void closeFolder();
-    File* newFile(const string&)const;
-    Folder* newFolder(const string&) const;
-    void addFile(File&) const;
-    void addFolder(Folder&) const;
-    void list() const ;
-    void remove(const string&);
+    File* newFile(const string&) const override;
+    bool newFolder(const string&) const override;
+    bool remove(const string&) override;
     string properties() const;
     bool cd(const string&);
-    string pwd() const;
-    bool copy(const string&, const string&, const string&);
-    bool move(const string&, const string&, const string&);
-    void ls(const string&) const;
+    string showCurrentFolder() const override;
+    bool copy(const string&, const string&, const string&) override;
+    bool move(const string&, const string&, const string&) override;
+    string list(const string&) const override;
     bool mkdir(const string&) const;
+    string info() const;
+
+    bool writeToFile(const string&, const string&) const override;
+    string showFileContent(const string&) const override;
+    string showInfo(const string&) const;
+    //string showItemPath(const string& name) const override;
+    Node* findItem(const string&) const override;
 };
 
-inline void FileManager::openFolder(const string &name) {
-    cwd = dynamic_cast<Folder*>(cwd->find(name));
+inline bool FileManager::remove(const string &path) {
+    size_t slash = path.find_last_of('/');
+    string parentPath = (slash == string::npos) ? "." :
+        (slash == 0) ? "/" : path.substr(0, slash);
+
+    string name = (slash == string::npos) ? path : path.substr(slash+1);
+    if (name.empty() || name == "." || name == "..") return false;
+
+    Folder *f = resolveDirectory(parentPath);
+    f->remove(name);
+    return true;
 }
 
-inline void FileManager::list() const {
-    for (const std::pair<const string, unique_ptr<Node>> &item : cwd->getItems()) {
-        if (item.second->isFolder()) {
-            cout << "/" + item.first << endl;
-        }else {
-            cout << item.first << endl;
-        }
-    }
+inline bool FileManager::writeToFile
+    (const string &content, const string &path) const {
+    File* f = resolveFile(path);
+    f->writeToFile(content);
+    return true;
 }
 
-inline Folder* FileManager::newFolder(const string &name) const { return cwd->newFolder(name); }
+inline string FileManager::showFileContent(const string &path) const {
+    File* f = resolveFile(path);
+    return f->getData();
+}
 
-inline File* FileManager::newFile(const string &name) const { return cwd->newFile(name); }
+inline string FileManager::showInfo(const string& path=".") const {
+    Node* node = nullptr;
+    if ((node = resolveDirectory(path)))
+        return node->properties();
+    if ((node = resolveFile(path)))
+        return node->properties();
+    return "";
+}
 
-inline void FileManager::addFile(File &file) const { cwd->addFile(file); }
+inline Node* FileManager::findItem(const string &name) const {
+    return cwd->find(name);
+}
 
-inline void FileManager::addFolder(Folder &folder) const { cwd->addFolder(folder); }
+std::pair<string, string> splitPathName(const string&path) {
+    size_t slash = path.find_last_of('/');
+    string parentPath = (slash == string::npos) ? "." :
+        (slash == 0) ? "/" : path.substr(0, slash);
+     a
+    string name = (slash == string::npos) ? path : path.substr(slash+1);
+    if (name.empty() || name == "." || name == "..")
+        name = "";
+    return {name, parentPath};
+}
+
+inline File* FileManager::newFile(const string &path) const {
+    auto pair = splitPathName(path);
+    Folder* f = resolveDirectory(pair.second);
+    return f->newFile(pair.first);
+}
+
+inline bool FileManager::addFile(File &file) {
+    cwd->addFile(file);
+    return true;
+}
+inline bool FileManager::addFolder(Folder &folder) {
+    cwd->addFolder(folder);
+    return false;
+}
 
 inline void FileManager::closeFolder() { cwd = cwd->closeFolder(); }
-
-inline void FileManager::remove(const string &name) { cwd->remove(name); }
 
 inline string FileManager::properties() const { return cwd->properties(); }
 
@@ -97,14 +140,27 @@ inline Folder* FileManager::resolveDirectory(const string &path) const {
     return (node && node->isFolder()) ? dynamic_cast<Folder*>(node) : nullptr;
 }
 
-inline bool FileManager::cd(const string &path) {
+inline File* FileManager::resolveFile(const string &path) const {
+    size_t slash = path.find_last_of('/');
+    string parentPath = (slash == string::npos) ? "." :
+        (slash == 0) ? "/" : path.substr(0, slash);
+
+    string name = (slash == string::npos) ? path : path.substr(slash+1);
+    if (name.empty() || name == "." || name == "..") return nullptr;
+
+    Folder *f = resolveDirectory(parentPath);
+    Node* node = f->find(name);
+    return (node && !node->isFolder()) ? dynamic_cast<File*>(node) : nullptr;
+}
+
+inline bool FileManager::openFolder(const string &path)  {
     Folder* f = resolveDirectory(path);
     if (!f) return false;
     cwd = f;
     return true;
 }
 
-inline string FileManager::pwd() const {
+inline string FileManager::showCurrentFolder() const {
     if (cwd == root.get()) return "/";
     vector<string>names;
     for (const Folder* f = cwd; f->parent(); f = f->parent()) {
@@ -154,18 +210,19 @@ inline bool FileManager::move(const string& name, const string &from, const stri
     return true;
 }
 
-void FileManager::ls(const string& path = ".") const {
+inline string FileManager::list(const string& path = ".") const {
     Folder* f = resolveDirectory(path);
-    if (!f) {
-        cout << "ls: no such directory\n";
-        return;
-    }
+    if (!f)
+        return "ls: no such directory";
+    string content;
     for (const auto& pair: f->items) {
-        cout << (pair.second->isFolder() ? "/" : "") << pair.first << "\n";
+        //cout << (pair.second->isFolder() ? "/" : "") << pair.first << "\n";
+        content += (pair.second->isFolder() ? "/" : "") + pair.first + "\n";
     }
+    return content;
 }
 
-bool FileManager::mkdir(const string& path) const {
+inline bool FileManager::newFolder(const string& path) const {
     auto slash = path.find_last_of('/');
     string parentPath = (slash == string::npos) ? "." :
         (slash == 0) ? "/" : path.substr(0, slash);
