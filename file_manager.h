@@ -83,7 +83,7 @@ std::pair<string, string> splitPathName(const string&path) {
     size_t slash = path.find_last_of('/');
     string parentPath = (slash == string::npos) ? "." :
         (slash == 0) ? "/" : path.substr(0, slash);
-     a
+
     string name = (slash == string::npos) ? path : path.substr(slash+1);
     if (name.empty() || name == "." || name == "..")
         name = "";
@@ -96,14 +96,14 @@ inline File* FileManager::newFile(const string &path) const {
     return f->newFile(pair.first);
 }
 
-inline bool FileManager::addFile(File &file) {
-    cwd->addFile(file);
-    return true;
-}
-inline bool FileManager::addFolder(Folder &folder) {
-    cwd->addFolder(folder);
-    return false;
-}
+// inline bool FileManager::addFile(File &file) {
+//     cwd->addFile(file);
+//     return true;
+// }
+// inline bool FileManager::addFolder(Folder &folder) {
+//     cwd->addFolder(folder);
+//     return false;
+// }
 
 inline void FileManager::closeFolder() { cwd = cwd->closeFolder(); }
 
