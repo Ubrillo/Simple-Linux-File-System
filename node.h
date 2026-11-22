@@ -23,7 +23,7 @@ public:
     Node(const string &id, Folder* parent=nullptr):
         name(id), root(parent) {}
     virtual bool isFolder() const = 0;
-    string properties() const;
+    virtual string properties() const = 0;
     string getName() const { return name; };
     Folder* parent() const { return root; }
     string path() const;

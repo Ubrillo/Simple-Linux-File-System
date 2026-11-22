@@ -3,7 +3,6 @@
 //
 #include "shell.h"
 
-
 inline void Shell::run() {
     string line;
     while (running) {
