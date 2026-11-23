@@ -21,17 +21,17 @@ public:
 
     virtual bool remove(const string&) = 0;
 
-    virtual Node* findItem(const string&) const = 0;
+    virtual Node* findItem(const string&) const = 0
 
     virtual string list(const string&) const = 0;
 
-    virtual File* newFile(const string&) const = 0;
+    virtual File* newFile(const string&, const string& ="") const = 0;
 
     virtual bool newFolder(const string&) const = 0;
 
-    virtual bool copy(const string&, const string&, const string&) = 0;
+    virtual bool copy(const string&, const string&) = 0;
 
-    virtual bool move(const string&, const string&, const string&) = 0;
+    virtual bool move(const string&, const string&) = 0;
 
     virtual string showCurrentFolder() const = 0;
 
