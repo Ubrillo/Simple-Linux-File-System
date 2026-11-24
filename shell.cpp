@@ -28,7 +28,6 @@ void Shell::execute(const string& line) {
     Args args;
     string word, current;
     bool inQuotes = false;
-
     while (in >> word) {
         if (!inQuotes) {
             if (word.front() != '"') {
@@ -37,7 +36,6 @@ void Shell::execute(const string& line) {
             }
             inQuotes = true;
             current = word.substr(1);
-
         }else {
             current += ' ' + word;
         }
@@ -60,7 +58,11 @@ void Shell::execute(const string& line) {
         cout << "usage: " << cmd.usage << "\n";
         return;
     }
-    cmd.run(args);
+    try {
+        cmd.run(args);
+    }catch (const std::exception& e) {
+        cout << name << ": error: " << e.what() << endl;
+    }
 }
 
 int main() {
