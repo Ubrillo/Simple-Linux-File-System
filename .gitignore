@@ -1,0 +1,13 @@
+# CMake build output (regenerated on every build)
+build/
+cmake-build-*/
+
+# Compiled programs and object files
+*.exe
+*.o
+*.obj
+/main
+
+# CLion per-user settings (the shared .idea files stay tracked)
+.idea/workspace.xml
+.idea/shelf/

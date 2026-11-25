@@ -102,7 +102,8 @@ inline Node* FileManager::findItem(const string &name) const {
 inline File* FileManager::newFile(const string &path, const string& content="") const {
     auto pair = splitPathName(path);
     Folder* f = resolveDirectory(pair.second);
-    return (f ? f->newFile(pair.first, content) : nullptr);
+    string name = pair.first;
+    return (f && !f->find(name) ? f->newFile(pair.first, content) : nullptr);
 }
 
 // inline bool FileManager::addFile(File &file) {
@@ -150,14 +151,10 @@ inline Folder* FileManager::resolveDirectory(const string &path) const {
 }
 
 inline File* FileManager::resolveFile(const string &path) const {
-    size_t slash = path.find_last_of('/');
-    string parentPath = (slash == string::npos) ? "." :
-        (slash == 0) ? "/" : path.substr(0, slash);
-
-    string name = (slash == string::npos) ? path : path.substr(slash+1);
-    if (name.empty() || name == "." || name == "..") return nullptr;
-
-    Folder *f = resolveDirectory(parentPath);
+    auto pair = splitPathName(path);
+    if (pair.first.empty()) return nullptr;
+    string &name = pair.first;
+    Folder *f = resolveDirectory(pair.second);
     Node* node = (f ? f->find(name) : nullptr);
     return (node && !node->isFolder()) ? dynamic_cast<File*>(node) : nullptr;
 }
@@ -197,10 +194,12 @@ inline bool FileManager::copy( const string &fromPath, const string &toPath) {
         if (!load) return false;
         if (!load->isFolder()) {
             File *f = dynamic_cast<File*>(load);
+            if (destination->find(f->name)) return false;
             destination->addFile(*f);
             return true;
         }
         Folder *f = dynamic_cast<Folder*>(load);
+        if (destination->find(f->name)) return false;
         destination->addFolder(*f);
         return true;
     }
@@ -216,7 +215,7 @@ inline bool FileManager::move(const string &fromPath, const string &toPath) {
 
     map<const string, unique_ptr<Node>>::iterator it = current->items.find(name);
     if (it == current->items.end()) return false;
-    //if (destination->items.count(name)) return false; check for duplicate
+    if (destination->items.count(name)) return false; //check for duplicate
     if (current == destination) return true; //already there
     if (contains(it->second.get(), destination)) return false; //don't move itself/ its own subfolder
     unique_ptr<Node> node = std::move(it->second);
@@ -248,6 +247,7 @@ inline bool FileManager::newFolder(const string& path) const {
     if (name.empty() || name == "." || name == "..") return false;
 
     Folder* parent = resolveDirectory(parentPath);
+    if (parent->find(name)) return false;
     return parent && parent->newFolder(name);
 }
 #endif //FILEMANAGER_FILE_MANAGER_H

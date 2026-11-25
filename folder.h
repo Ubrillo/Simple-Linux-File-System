@@ -50,14 +50,15 @@ inline void Folder::addFolder(Folder &folder) {
 inline File* Folder::newFile(const string &name, const string& content="") {
     unique_ptr<Node>smp(new File(name, content, this));
     File* raw = dynamic_cast<File*>(smp.get());
-    items[name] = std::move(smp);
+    items.insert({name, std::move(smp)});
     return raw;
 }
 
 inline Folder* Folder::newFolder(const string &name) {
     unique_ptr<Node>smp(new Folder(name, this));
     Folder* raw = dynamic_cast<Folder*>(smp.get());
-    items[name] = std::move(smp);
+    //items[name] = std::move(smp);
+    items.insert({name, std::move(smp)});
     return raw;
 }
 
@@ -81,13 +82,13 @@ inline Folder::Folder(const Folder &f):Node(f) {
             Folder *old = dynamic_cast<Folder*>(node);
             unique_ptr<Node>new_ptr(new Folder(*old));
             new_ptr->root = this;
-            items[pair.first] = std::move(new_ptr);
+            items.insert({new_ptr->name, std::move(new_ptr)});
         }
         else {
             const File *oldFile = dynamic_cast<File*>(node);
             unique_ptr<Node>new_ptr(new File(*oldFile));
             new_ptr->root = this;
-            items[pair.first]  = std::move(new_ptr);
+            items.insert({new_ptr->name, std::move(new_ptr)});
         }
     }
 }
