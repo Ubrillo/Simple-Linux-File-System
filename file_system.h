@@ -21,7 +21,7 @@ public:
 
     virtual bool remove(const string&) = 0;
 
-    virtual Node* findItem(const string&) const = 0
+    virtual Node* findItem(const string&) const = 0;
 
     virtual string list(const string&) const = 0;
 

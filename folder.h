@@ -28,18 +28,12 @@ public:
     Folder* newFolder(const string&);
     const map<const string, unique_ptr<Node>>& getItems() const;
     bool isFolder()  const override {return true;}
-    void remove(const string&);
+    bool remove(const string&);
     Folder* closeFolder() const;
     Node* find(const string&) const;
-    void addNode(unique_ptr<Node> node);
-    void addNewNode();
     string properties() const override;
 
 };
-
-inline void Folder::addNode(unique_ptr<Node> node) {
-    items.insert({node->getName(), std::move(node)});
-}
 
 inline void Folder::addFile(File &file) {
     unique_ptr<Node>file_ptr(new File(file));
@@ -56,22 +50,23 @@ inline void Folder::addFolder(Folder &folder) {
 inline File* Folder::newFile(const string &name, const string& content="") {
     unique_ptr<Node>smp(new File(name, content, this));
     File* raw = dynamic_cast<File*>(smp.get());
-    items[name] = std::move(smp);
+    items.insert({name, std::move(smp)});
     return raw;
 }
 
 inline Folder* Folder::newFolder(const string &name) {
     unique_ptr<Node>smp(new Folder(name, this));
     Folder* raw = dynamic_cast<Folder*>(smp.get());
-    items[name] = std::move(smp);
+    //items[name] = std::move(smp);
+    items.insert({name, std::move(smp)});
     return raw;
 }
 
-inline void Folder::remove(const string &name) {
-    items.erase(name);
+inline bool Folder::remove(const string &name) {
+    return items.erase(name);
 }
 
-inline Folder* Folder::closeFolder() const { return root;}
+inline Folder* Folder::closeFolder() const { return root; }
 
 inline const map<const string, unique_ptr<Node>>& Folder::getItems() const  { return items; }
 
@@ -87,13 +82,13 @@ inline Folder::Folder(const Folder &f):Node(f) {
             Folder *old = dynamic_cast<Folder*>(node);
             unique_ptr<Node>new_ptr(new Folder(*old));
             new_ptr->root = this;
-            items[pair.first] = std::move(new_ptr);
+            items.insert({new_ptr->name, std::move(new_ptr)});
         }
         else {
             const File *oldFile = dynamic_cast<File*>(node);
             unique_ptr<Node>new_ptr(new File(*oldFile));
             new_ptr->root = this;
-            items[pair.first]  = std::move(new_ptr);
+            items.insert({new_ptr->name, std::move(new_ptr)});
         }
     }
 }
@@ -116,11 +111,7 @@ inline string Folder::properties() const  {
             "\nsize: " + std::to_string(items.size());
 }
 
-inline string File::properties() const {
-    return  "name: " + name +
-        "\nroot: " + (root && root->parent() ? root->getName() : "/") +
-        "\npath: " + path();
-}
+
 ////////////////////////
 inline string Node::path() const {
     //if (!root) return "*/";
@@ -147,5 +138,11 @@ inline  size_t Folder::getSize() const{
     return items.size();
 }
 
+
+inline string File::properties() const {
+    return  "name: " + name +
+        "\nroot: " + (root && root->parent() ? root->getName() : "/") +
+        "\npath: " + path();
+}
 ///////////////////
 #endif //FILEMANAGER_FOLDER_H

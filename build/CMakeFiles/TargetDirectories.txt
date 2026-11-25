@@ -1,3 +1,0 @@
-C:/Users/ubril/OneDrive/c++/FileManager/build/CMakeFiles/FileManager.dir
-C:/Users/ubril/OneDrive/c++/FileManager/build/CMakeFiles/edit_cache.dir
-C:/Users/ubril/OneDrive/c++/FileManager/build/CMakeFiles/rebuild_cache.dir
